@@ -18,14 +18,14 @@ def parse_flow_logs(flow_log_file, lookup_dict):
         with open(flow_log_file, 'r') as file:
             for line in file:
                 columns = line.split()
+
                 if len(columns) < 14:
                     continue  # Ignore lines with insufficient data
                 
                 dstport = columns[5].strip()
                 protocol_number = columns[7].strip()
                 
-                # Map the protocol number to its corresponding protocol name (e.g., '6' -> 'tcp', '17' -> 'udp', '1' -> 'icmp').
-                # If the protocol number is not found, default to 'unknown'.
+                # Map the protocol number to its corresponding protocol name (e.g., '6' -> 'tcp', '17' -> 'udp', '1' -> 'icmp').If the protocol number is not found, default to 'unknown'.
                 protocol = {'6': 'tcp', '17': 'udp', '1': 'icmp'}.get(protocol_number, 'unknown')
                 
                 key = (dstport, protocol)
