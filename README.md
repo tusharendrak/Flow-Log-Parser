@@ -1,4 +1,4 @@
-# Flow Log Parser with Tag Mapping
+# Flow Log Parser (Illumio Technical Assessment)
 
 ## Overview
 This program parses flow log data and maps each row to a tag based on a lookup table. The lookup table is defined as a CSV file with three columns: `dstport`, `protocol`, and `tag`. The combination of `dstport` and `protocol` determines the tag applied to each flow log row.
@@ -13,10 +13,6 @@ The output is a summary file that contains:
 - The program only supports default log format (as shown in the example in the problem statement).
 - The flow logs must be in the version 2 format, as no other versions are supported.
 - The logs should have at least 14 fields (as shown in the provided example). Lines with fewer fields will be skipped.
-
-### Protocol Mapping
-- Protocol is assumed to be either TCP or UDP based on the protocol number (6 for TCP, 17 for UDP).
-- Any unknown protocol will default to 'Untagged'.
 
 ### Case Insensitivity
 - Matching for protocol in the lookup table is case insensitive.
@@ -48,40 +44,6 @@ The output is written to a specified file and contains two sections:
 - **Tag Counts**: The count of each tag, including untagged entries.
 - **Port/Protocol Combination Counts**: The count of occurrences for each port and protocol combination.
 
-
-### Example Input:
-Flow Log:
-2 123456789012 eni-0a1b2c3d 10.0.1.201 198.51.100.2 443 49153 6 25 20000 1620140761 1620140821 ACCEPT OK
-2 123456789012 eni-4d3c2b1a 192.168.1.100 203.0.113.101 23 49154 6 15 12000 1620140761 1620140821 REJECT OK
-...
-
-### Lookup Table:
-dstport,protocol,tag
-25,tcp,sv_P1
-443,tcp,sv_P2
-23,tcp,sv_P1
-110,tcp,email
-993,tcp,email
-...
-
-### Example Output:
-Tag Counts:
-Tag,Count
-sv_P2,1
-sv_P1,2
-email,3
-Untagged,9
-
-Port/Protocol Combination Counts:
-Port,Protocol,Count
-22,tcp,1
-23,tcp,1
-25,tcp,1
-110,tcp,1
-443,tcp,1
-993,tcp,1
-...
-
 ## Installation and Running the Program
 
 ### Prerequisites:
@@ -98,61 +60,57 @@ Port,Protocol,Count
 ### Where:
 
 <flow_log_file>: Path to the flow log file.
+
 <lookup_table_file>: Path to the CSV lookup table file.
+
 <output_file>: Path to the output file where the results will be saved.
 
 Example Run:
-python main.py flow_logs.txt lookup_table.csv output_report.txt
 
-File Structure:
-.
+      python main.py flow_logs.txt lookup_table.csv output_report.txt
+
+### File Structure:
+
 ├── main.py                # Entry point of the program
+
 ├── parser.py              # Contains logic to parse flow logs
+
 ├── lookup.py              # Loads and processes the lookup table
+
 ├── report.py              # Generates the output report
-├── exceptions.py          # Custom exceptions for error handling
-├── utils.py               # Utility functions (if necessary)
+
 ├── flow_logs.txt          # Example flow log file
+
 ├── lookup_table.csv       # Example lookup table
-├── output_report.txt      # Output report (generated)
-└── README.md              # This documentation
 
-## Testing
+├── README.md              # The documentation
 
-Test Cases:
-Happy Path: Tested the program with a properly formatted flow log file and a valid lookup table.
+└── output_report.txt      # Output report (generated)
 
-Result: The output file is generated with accurate tag counts and port/protocol counts.
-Missing Lookup Entry: Tested for flows where no tag is found in the lookup table.
+## Testing and Analysis
 
-Result: Such flows are correctly tagged as "Untagged".
-Insufficient Fields in Flow Log: Tested with log lines that have fewer than 14 fields.
+### Manual and Unit Tests
+- **Test 1: Basic Functionality**: Verified that the program correctly parses a flow log file and maps tags based on a lookup table.
+- **Test 2: Handling Blank Lines**: Ensured that blank lines in the flow log file are skipped without causing errors.
+- **Test 3: Insufficient Columns**: Confirmed that lines with fewer than 14 columns are ignored.
+- **Test 4: Protocol Mapping**: Checked that protocol numbers are correctly mapped to their respective names (TCP, UDP, ICMP) and that unknown protocols default to 'unknown'.
+- **Test 5: Case Insensitivity**: Verified that protocol matching in the lookup table is case insensitive.
+- **Test 6: Large Files**: Tested the program with flow log files up to 10 MB to ensure performance and correctness.
+- **Test 7: Lookup Table Size**: Ensured that the program can handle lookup tables with up to 10,000 entries.
+  
+### Exception Handling
+- FileNotFoundError: Raised when any of the input files (flow log or lookup table) are not found.
+- MalformedDataError: Raised when a flow log entry or lookup table entry has incorrect data (e.g., missing fields).
+- GenericException: Any other unhandled exception will be caught, and an appropriate error message will be displayed.
 
-Result: The lines with insufficient data are skipped.
-File Not Found: Tested by providing incorrect file paths for the flow log or lookup table.
+### Analysis
+- **Performance**: The program performs efficiently with flow log files up to 10 MB and lookup tables with up to 10,000 entries. The use of dictionaries for tag and port/protocol counts ensures fast lookups and updates.
+- **Robustness**: The program handles various edge cases, such as blank lines, lines with insufficient columns, and unknown protocols. Detailed error messages are provided for missing or incorrectly formatted input files.
+- **Scalability**: While the current implementation is designed for files up to 10 MB, the program can be scaled to handle larger files with minor optimizations, such as using more efficient data structures or parallel processing.
+- **Efficient Lookups**: A Python dictionary is used to store the lookup table, enabling O(1) average time complexity for each tag lookup. This ensures that even with a large number of mappings (up to 10,000), performance remains optimal.
 
-Result: The program raises a descriptive error message.
-Case Insensitivity: Tested to ensure protocol matching is case insensitive.
-
-Result: Protocol matching works regardless of case (e.g., TCP or tcp).
-Invalid Lookup Table: Tested with an incorrectly formatted lookup table (missing columns).
-
-Result: The program raises an exception due to missing data.
-
-## Performance Test:
-The program was tested with a flow log file of approximately 10 MB and processed the data efficiently, demonstrating its ability to handle logs within the specified limits.
-Exception Handling
-FileNotFoundError: Raised when any of the input files (flow log or lookup table) are not found.
-MalformedDataError: Raised when a flow log entry or lookup table entry has incorrect data (e.g., missing fields).
-GenericException: Any other unhandled exception will be caught, and an appropriate error message will be displayed.
-Performance and Scaling Considerations
-Line-by-Line Processing: The flow log file is processed line-by-line, minimizing memory usage, which is important for handling larger files up to the specified limit (10 MB).
-
-Efficient Lookups: A Python dictionary is used to store the lookup table, enabling O(1) average time complexity for each tag lookup. This ensures that even with a large number of mappings (up to 10,000), performance remains optimal.
-
-Parallel Processing: In a high-throughput scenario, the program can be scaled by using parallel processing or threading (though not implemented here). This can be achieved by processing chunks of the flow log file in parallel.
-
-## Future Improvements
-Support for Additional Protocols: Currently, only TCP and UDP are supported. Future updates could add support for other protocols.
-Custom Log Formats: The program could be enhanced to support custom log formats or flow log versions.
-Batch Processing: Implement batch processing for environments handling larger files or continuous data streams.
+### Future Improvements
+- **Enhanced Protocol Mapping**: Extend the protocol mapping to include more protocols beyond TCP, UDP, and ICMP.
+- **Configurable Limits**: Allow users to configure the maximum file size and lookup table size through command-line arguments or a configuration file.
+- **Parallel Processing**: Implement parallel processing to handle larger flow log files more efficiently.
+- **Logging**: Add logging to provide more insights into the program's execution and help with debugging.
