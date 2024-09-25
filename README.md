@@ -95,8 +95,6 @@ Example Run:
 - **Test 3: Insufficient Columns**: Confirmed that lines with fewer than 14 columns are ignored.
 - **Test 4: Protocol Mapping**: Checked that protocol numbers are correctly mapped to their respective names (TCP, UDP, ICMP) and that unknown protocols default to 'unknown'.
 - **Test 5: Case Insensitivity**: Verified that protocol matching in the lookup table is case insensitive.
-- **Test 6: Large Files**: Tested the program with flow log files up to 10 MB to ensure performance and correctness.
-- **Test 7: Lookup Table Size**: Ensured that the program can handle lookup tables with up to 10,000 entries.
   
 ### Exception Handling
 - FileNotFoundError: Raised when any of the input files (flow log or lookup table) are not found.
